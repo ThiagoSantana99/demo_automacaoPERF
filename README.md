@@ -164,3 +164,6 @@ Nenhum dos dois testes atendeu ao criterio de aceitacao. O teste de carga falhou
 
 Reports Gerados:
 https://github.com/ThiagoSantana99/demo_automacaoPERF/tree/main/reports
+
+Reports Gerados via Workflow:
+https://thiagosantana99.github.io/demo_automacaoPERF/reports/

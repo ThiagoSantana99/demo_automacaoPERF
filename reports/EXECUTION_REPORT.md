@@ -40,5 +40,8 @@ O teste de pico ficou muito abaixo da vazao esperada, teve aumento forte de late
 
 Nenhum dos dois testes atendeu ao criterio de aceitacao. O teste de carga falhou principalmente por vazao baixa e p90 acima do limite. O teste de pico falhou por vazao baixa, latencia muito alta e presenca de erros.
 
-Reports Gerados:
-https://github.com/ThiagoSantana99/demo_automacaoPERF/tree/main/reports/
+Reports Gerados via Workflow:
+https://thiagosantana99.github.io/demo_automacaoPERF/reports/
+
+
+Reports Gerados execução local: https://github.com/ThiagoSantana99/demo_automacaoPERF/tree/main/reports

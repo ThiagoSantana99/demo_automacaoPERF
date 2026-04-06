@@ -30,8 +30,10 @@ jobs:
         shell: bash
         run: |
           rm -rf site
-          mkdir -p site/reports
-          cp -R reports/. site/reports/
+          mkdir -p site/reports/load site/reports/spike
+          cp -R reports/load/html-report site/reports/load/
+          cp -R reports/spike/html-report site/reports/spike/
+          cp reports/EXECUTION_REPORT.md site/reports/
           cat > site/index.html <<'EOF'
           <!doctype html>
           <html lang="pt-BR">

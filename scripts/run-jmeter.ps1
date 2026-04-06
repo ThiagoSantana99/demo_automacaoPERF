@@ -102,14 +102,14 @@ if (-not $SkipBuild) {
 
 switch ($Mode) {
     'load' {
-        $null = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '900' -Throughput '250'
+        $null = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '300' -Throughput '250'
     }
     'spike' {
-        $null = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '180' -Throughput '250'
+        $null = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '300' -Throughput '250'
     }
     'both' {
-        $loadOk = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '900' -Throughput '250'
-        $spikeOk = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '180' -Throughput '250'
+        $loadOk = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '300' -Throughput '250'
+        $spikeOk = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '300' -Throughput '250'
         if (-not $loadOk -or -not $spikeOk) {
             throw 'Um ou mais perfis falharam. Consulte os logs em reports/<perfil>/run.log.'
         }

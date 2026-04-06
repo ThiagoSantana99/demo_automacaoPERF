@@ -3,32 +3,28 @@ param(
     [ValidateSet('load', 'spike', 'both')]
     [string]$Mode = 'both',
 
-    [string]$JmeterHome = $env:JMETER_HOME
+    [string]$ImageName = 'blazedemo-performance:jmeter-5.6.3',
+
+    [switch]$SkipBuild
 )
 
 $ErrorActionPreference = 'Stop'
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$planPath = Join-Path $root 'jmeter\blazedemo-template.jmx'
 $reportsRoot = Join-Path $root 'reports'
-$dataFile = Join-Path $root 'data\passengers.csv'
+$generatedRoot = Join-Path $root '.generated'
+$log4jConfig = '/workspace/config/log4j2-console.xml'
 
-function Get-JMeterBat {
-    param([string]$Home)
-
-    if ($Home) {
-        $candidate = Join-Path $Home 'bin\jmeter.bat'
-        if (Test-Path $candidate) {
-            return $candidate
-        }
+function Assert-DockerAvailable {
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        throw 'Docker nao encontrado. Instale o Docker Desktop ou o Docker Engine e tente novamente.'
     }
+}
 
-    $command = Get-Command jmeter.bat -ErrorAction SilentlyContinue
-    if ($command) {
-        return $command.Source
-    }
+function Invoke-DockerBuild {
+    param([string]$ContextPath)
 
-    throw 'JMeter nao encontrado. Defina JMETER_HOME ou coloque jmeter.bat no PATH.'
+    & docker build -t $ImageName $ContextPath
 }
 
 function Invoke-JMeterProfile {
@@ -41,8 +37,10 @@ function Invoke-JMeterProfile {
     )
 
     $runDir = Join-Path $reportsRoot $RunName
-    $jtlPath = Join-Path $runDir 'results.jtl'
-    $reportDir = Join-Path $runDir 'html-report'
+    $planFile = Join-Path $generatedRoot "$RunName.jmx"
+    $planFileContainer = "/workspace/.generated/$RunName.jmx"
+    $jtlPath = "/workspace/reports/$RunName/results.jtl"
+    $reportDir = "/workspace/reports/$RunName/html-report"
 
     if (Test-Path $runDir) {
         Remove-Item $runDir -Recurse -Force
@@ -50,31 +48,35 @@ function Invoke-JMeterProfile {
 
     New-Item -ItemType Directory -Force -Path $runDir | Out-Null
 
-    $args = @(
-        '-n'
-        '-t', $script:PlanPath
-        '-l', $jtlPath
-        '-e'
-        '-o', $reportDir
-        "-JdataFile=$script:DataFile"
-        "-Jthreads=$Threads"
-        "-JrampUp=$RampUp"
-        "-Jduration=$Duration"
-        "-Jthroughput=$Throughput"
-    )
+    $template = Get-Content (Join-Path $root 'jmeter\blazedemo-template.jmx') -Raw
+    $rendered = $template.
+        Replace('__THREADS__', $Threads).
+        Replace('__RAMPUP__', $RampUp).
+        Replace('__DURATION__', $Duration).
+        Replace('__THROUGHPUT__', $Throughput)
 
-    & $script:JMeterBat @args
+    New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
+    [System.IO.File]::WriteAllText($planFile, $rendered, [System.Text.Encoding]::ASCII)
+
+    & docker run --rm `
+        -v "${root}:/workspace" `
+        -w /workspace `
+        -e "JVM_ARGS=-Dlog4j2.configurationFile=$log4jConfig" `
+        $ImageName `
+        -n `
+        -t $planFileContainer `
+        -l $jtlPath `
+        -e `
+        -o $reportDir
 }
 
-if (-not (Test-Path $dataFile)) {
-    throw "Arquivo de dados nao encontrado: $dataFile"
-}
-
-$script:JMeterBat = Get-JMeterBat -Home $JmeterHome
-$script:PlanPath = $planPath
-$script:DataFile = $dataFile
+Assert-DockerAvailable
 
 New-Item -ItemType Directory -Force -Path $reportsRoot | Out-Null
+
+if (-not $SkipBuild) {
+    Invoke-DockerBuild -ContextPath $root
+}
 
 switch ($Mode) {
     'load' {

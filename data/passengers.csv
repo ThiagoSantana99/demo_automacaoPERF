@@ -1,7 +1,0 @@
-fromPort,toPort,airline,flight,price,inputName,address,city,state,zipCode,cardType,creditCardNumber,creditCardMonth,creditCardYear,nameOnCard
-Philadelphia,London,Virgin America,43,472.56,James Panetti,123 Street,Somewhere,Someplace,12345,visa,12345,11,2017,James Panetti
-Philadelphia,London,Virgin America,43,472.56,Ana Souza,123 Street,Somewhere,Someplace,12345,visa,12345,11,2017,Ana Souza
-Philadelphia,London,Virgin America,43,472.56,Carlos Lima,123 Street,Somewhere,Someplace,12345,visa,12345,11,2017,Carlos Lima
-Philadelphia,London,Virgin America,43,472.56,Mariana Silva,123 Street,Somewhere,Someplace,12345,visa,12345,11,2017,Mariana Silva
-Philadelphia,London,Virgin America,43,472.56,Rafael Costa,123 Street,Somewhere,Someplace,12345,visa,12345,11,2017,Rafael Costa
-

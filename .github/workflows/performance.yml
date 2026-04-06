@@ -9,34 +9,16 @@ on:
 
 jobs:
   jmeter:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Install JMeter
-        shell: powershell
-        run: |
-          $version = '5.6.3'
-          $zip = "apache-jmeter-$version.zip"
-          $url = "https://archive.apache.org/dist/jmeter/binaries/$zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Expand-Archive -Path $zip -DestinationPath "$env:GITHUB_WORKSPACE\tools" -Force
-          $env:JMETER_HOME = "$env:GITHUB_WORKSPACE\tools\apache-jmeter-$version"
-          "JMETER_HOME=$env:JMETER_HOME" | Out-File -FilePath $env:GITHUB_ENV -Append
-          & "$env:JMETER_HOME\bin\jmeter.bat" -v
-
       - name: Run performance tests
-        shell: powershell
+        shell: pwsh
         run: |
-          .\scripts\run-jmeter.ps1 -Mode both -JmeterHome $env:JMETER_HOME
+          ./scripts/run-jmeter.ps1 -Mode both
 
       - name: Upload reports
         if: always()

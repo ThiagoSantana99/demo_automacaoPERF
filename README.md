@@ -1,6 +1,6 @@
 # BlazeDemo Performance
 
-Projeto de performance para o fluxo de compra de passagem aerea no [BlazeDemo](https://www.blazedemo.com/), usando JMeter.
+Projeto de performance para o fluxo de compra de passagem aerea no [BlazeDemo](https://www.blazedemo.com/), usando JMeter em Docker.
 
 ## Escopo
 
@@ -13,16 +13,16 @@ Projeto de performance para o fluxo de compra de passagem aerea no [BlazeDemo](h
 ## Estrutura
 
 - `jmeter/` contem o plano `.jmx`
-- `data/passengers.csv` contem a massa de dados
-- `scripts/run-jmeter.ps1` executa os perfis e gera os relatorios HTML do JMeter
+- `scripts/run-jmeter.ps1` faz o `docker build` e executa os perfis
+- `config/log4j2-console.xml` desliga o appender de arquivo padrao do JMeter
+- `reports/` recebe os relatorios gerados pelo JMeter
 
 ## Pre-requisitos
 
-- Java 8 ou superior
-- Apache JMeter 5.6 ou superior instalado localmente
-- `JMETER_HOME` configurado, ou `jmeter.bat` disponivel no `PATH`
+- Docker instalado localmente
+- GitHub Actions com suporte a containers
 
-## Como executar
+## Como executar localmente
 
 Executar os dois perfis:
 
@@ -42,11 +42,17 @@ Executar apenas pico:
 powershell -ExecutionPolicy Bypass -File .\scripts\run-jmeter.ps1 -Mode spike
 ```
 
-Se o JMeter estiver em outro caminho, informe o diretório raiz:
+Se a imagem ja tiver sido buildada e voce quiser reaproveitar:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\run-jmeter.ps1 -Mode both -JmeterHome "C:\apache-jmeter-5.6.3"
+powershell -ExecutionPolicy Bypass -File .\scripts\run-jmeter.ps1 -Mode both -SkipBuild
 ```
+
+O script executa:
+
+1. `docker build -t blazedemo-performance:jmeter-5.6.3 .`
+2. `docker run` para o teste de carga
+3. `docker run` para o teste de pico
 
 Saidas geradas:
 
@@ -57,7 +63,7 @@ Saidas geradas:
 
 ## GitHub Actions
 
-O fluxo em `.github/workflows/performance.yml` executa em `windows-latest`, instala o JMeter, roda os perfis `load` e `spike` e publica `reports/load/**` e `reports/spike/**` como artefato.
+O fluxo em `.github/workflows/performance.yml` executa em `ubuntu-latest`, faz `docker build` da imagem do projeto, roda os perfis `load` e `spike` dentro do container e publica `reports/load/**` e `reports/spike/**` como artefato.
 
 Como executar no GitHub:
 
@@ -68,19 +74,38 @@ Como executar no GitHub:
 
 O workflow tambem roda automaticamente em `push` na branch `main` e em `pull_request`.
 
-## Como validar o criterio
+## Criterio de aceitacao
 
-No relatorio HTML do JMeter, verifique:
+O objetivo deste teste nao e apenas "carregar" a aplicacao, mas confirmar que o fluxo de compra continua util sob pressao. Para isso, o criterio de aceitacao e:
 
-- `90th percentile` menor que `2000 ms`
-- `Throughput` proximo de `250 req/s`
-- `Error %` igual a `0`
+- `250 requisicoes por segundo` sustentadas
+- `90th percentile` de tempo de resposta abaixo de `2 segundos`
+- `Error %` igual a `0` ou muito proximo de `0`
 
-Se o throughput ficar abaixo da meta, o teste nao atende ao criterio, mesmo com p90 baixo. Se o p90 passar de `2 s`, o criterio tambem falha, mesmo com vazao alta.
+### Quando o criterio e satisfatorio
+
+O criterio e considerado satisfatorio quando o teste consegue manter a vazao alvo de `250 req/s` e, ao mesmo tempo, o `90th percentile` fica abaixo de `2 s`. Nesse caso, a maioria esmagadora das requisicoes responde dentro da janela esperada, o fluxo de compra permanece consistente e nao ha indicio de degradacao relevante do sistema.
+
+### Quando o criterio nao e satisfatorio
+
+O criterio e considerado nao satisfatorio quando qualquer um destes pontos ocorre:
+
+- a vazao fica abaixo de `250 req/s`
+- o `90th percentile` ultrapassa `2 s`
+- o volume de erros deixa de ser nulo ou aceitavel
+
+Isso indica que o sistema nao conseguiu sustentar o nivel minimo de desempenho esperado para uma experiencia estavel. Se a vazao cair, o ambiente nao suporta a demanda. Se o `p90` subir acima de `2 s`, mesmo que a media pareca boa, uma parcela relevante dos usuarios vai perceber lentidao. Se houver erro, o fluxo de compra deixa de ser confiavel.
+
+### Como interpretar o resultado
+
+- Se a vazao for `>= 250 req/s` e o `p90 < 2 s`, o criterio foi atendido.
+- Se a vazao for menor que `250 req/s`, o criterio foi reprovado.
+- Se o `p90 >= 2 s`, o criterio foi reprovado.
+- Se houver erros recorrentes, o criterio tambem deve ser tratado como reprovado.
 
 ## Relatorio de execucao
 
-Este ambiente nao possui JMeter instalado e nao permite publicar no GitHub, entao os scripts foram preparados, mas os numeros de execucao nao foram gerados aqui.
+Este ambiente nao executa o Docker nem publica no GitHub, entao os scripts foram preparados, mas os numeros de execucao nao foram gerados aqui.
 
 Quando o teste for executado, a conclusao deve ser preenchida com base em:
 

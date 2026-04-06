@@ -7,9 +7,79 @@
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="Variaveis" enabled="true">
         <collectionProp name="Arguments.arguments">
-          <elementProp name="baseUrl" elementType="Argument">
-            <stringProp name="Argument.name">baseUrl</stringProp>
-            <stringProp name="Argument.value">https://www.blazedemo.com</stringProp>
+          <elementProp name="fromPort" elementType="Argument">
+            <stringProp name="Argument.name">fromPort</stringProp>
+            <stringProp name="Argument.value">Philadelphia</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="toPort" elementType="Argument">
+            <stringProp name="Argument.name">toPort</stringProp>
+            <stringProp name="Argument.value">London</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="airline" elementType="Argument">
+            <stringProp name="Argument.name">airline</stringProp>
+            <stringProp name="Argument.value">Virgin America</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="flight" elementType="Argument">
+            <stringProp name="Argument.name">flight</stringProp>
+            <stringProp name="Argument.value">43</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="price" elementType="Argument">
+            <stringProp name="Argument.name">price</stringProp>
+            <stringProp name="Argument.value">472.56</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="inputName" elementType="Argument">
+            <stringProp name="Argument.name">inputName</stringProp>
+            <stringProp name="Argument.value">James Panetti</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="address" elementType="Argument">
+            <stringProp name="Argument.name">address</stringProp>
+            <stringProp name="Argument.value">123 Street</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="city" elementType="Argument">
+            <stringProp name="Argument.name">city</stringProp>
+            <stringProp name="Argument.value">Somewhere</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="state" elementType="Argument">
+            <stringProp name="Argument.name">state</stringProp>
+            <stringProp name="Argument.value">Someplace</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="zipCode" elementType="Argument">
+            <stringProp name="Argument.name">zipCode</stringProp>
+            <stringProp name="Argument.value">12345</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="cardType" elementType="Argument">
+            <stringProp name="Argument.name">cardType</stringProp>
+            <stringProp name="Argument.value">visa</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="creditCardNumber" elementType="Argument">
+            <stringProp name="Argument.name">creditCardNumber</stringProp>
+            <stringProp name="Argument.value">12345</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="creditCardMonth" elementType="Argument">
+            <stringProp name="Argument.name">creditCardMonth</stringProp>
+            <stringProp name="Argument.value">11</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="creditCardYear" elementType="Argument">
+            <stringProp name="Argument.name">creditCardYear</stringProp>
+            <stringProp name="Argument.value">2017</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="nameOnCard" elementType="Argument">
+            <stringProp name="Argument.name">nameOnCard</stringProp>
+            <stringProp name="Argument.value">James Panetti</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -41,26 +111,14 @@
         </collectionProp>
       </HeaderManager>
       <hashTree />
-      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Passenger Data" enabled="true">
-        <stringProp name="filename">${__P(dataFile,data/passengers.csv)}</stringProp>
-        <stringProp name="fileEncoding">UTF-8</stringProp>
-        <stringProp name="variableNames">fromPort,toPort,airline,flight,price,inputName,address,city,state,zipCode,cardType,creditCardNumber,creditCardMonth,creditCardYear,nameOnCard</stringProp>
-        <boolProp name="ignoreFirstLine">true</boolProp>
-        <stringProp name="delimiter">,</stringProp>
-        <boolProp name="quotedData">false</boolProp>
-        <boolProp name="recycle">true</boolProp>
-        <boolProp name="stopThread">false</boolProp>
-        <stringProp name="shareMode">shareMode.all</stringProp>
-      </CSVDataSet>
-      <hashTree />
       <PreciseThroughputTimer guiclass="TestBeanGUI" testclass="PreciseThroughputTimer" testname="Target Throughput" enabled="true">
         <doubleProp>
           <name>throughput</name>
-          <value>${__P(throughput,250)}</value>
+          <value>__THROUGHPUT__</value>
           <savedValue>0.0</savedValue>
         </doubleProp>
         <intProp name="throughputPeriod">1</intProp>
-        <longProp name="duration">${__P(duration,900)}</longProp>
+        <longProp name="duration">__DURATION__</longProp>
         <intProp name="batchSize">1</intProp>
         <intProp name="batchThreadDelay">5</intProp>
         <intProp name="exactLimit">10000</intProp>
@@ -72,10 +130,10 @@
           <boolProp name="LoopController.continue_forever">true</boolProp>
           <stringProp name="LoopController.loops">-1</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">${__P(threads,500)}</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">${__P(rampUp,300)}</stringProp>
+        <stringProp name="ThreadGroup.num_threads">__THREADS__</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">__RAMPUP__</stringProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">${__P(duration,900)}</stringProp>
+        <stringProp name="ThreadGroup.duration">__DURATION__</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -295,4 +353,3 @@
     </hashTree>
   </hashTree>
 </jmeterTestPlan>
-

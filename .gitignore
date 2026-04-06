@@ -1,7 +1,5 @@
 .idea/
 results/
-reports/load/
-reports/spike/
 .generated/
 target/
 *.log

@@ -59,16 +59,22 @@ function Invoke-JMeterProfile {
     New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
     [System.IO.File]::WriteAllText($planFile, $rendered, [System.Text.Encoding]::ASCII)
 
-    & docker run --rm `
-        -v "${root}:/workspace" `
-        -w /workspace `
-        -e "JVM_ARGS=-Dlog4j2.configurationFile=$log4jConfig" `
-        $ImageName `
-        -n `
-        -t $planFileContainer `
-        -l $jtlPath `
-        -e `
-        -o $reportDir 2>&1 | Tee-Object -FilePath $logPath
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & docker run --rm `
+            -v "${root}:/workspace" `
+            -w /workspace `
+            -e "JVM_ARGS=-Dlog4j2.configurationFile=$log4jConfig" `
+            $ImageName `
+            -n `
+            -t $planFileContainer `
+            -l $jtlPath `
+            -e `
+            -o $reportDir 2>&1 | Tee-Object -FilePath $logPath
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
 
     $exitCode = $LASTEXITCODE
     $reportIndex = Join-Path $runDir 'html-report\index.html'

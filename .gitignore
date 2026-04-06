@@ -1,6 +1,5 @@
 .idea/
 results/
-.generated/
 target/
 *.log
 *.jtl

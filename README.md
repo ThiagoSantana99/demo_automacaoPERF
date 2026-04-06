@@ -15,7 +15,7 @@ Projeto de performance para o fluxo de compra de passagem aerea no [BlazeDemo](h
 - `jmeter/` contem o plano `.jmx`
 - `scripts/run-jmeter.ps1` faz o `docker build` e executa os perfis
 - `config/log4j2-console.xml` desliga o appender de arquivo padrao do JMeter
-- `reports/` recebe os relatorios gerados pelo JMeter
+- `reports/` recebe os relatórios gerados pelo JMeter
 
 ## Pre-requisitos
 
@@ -58,12 +58,21 @@ Saidas geradas:
 
 - `reports/load/results.jtl`
 - `reports/load/html-report/index.html`
+- `reports/load/run.log`
 - `reports/spike/results.jtl`
 - `reports/spike/html-report/index.html`
+- `reports/spike/run.log`
 
 ## GitHub Actions
 
-O fluxo em `.github/workflows/performance.yml` executa em `ubuntu-latest`, faz `docker build` da imagem do projeto, roda os perfis `load` e `spike` dentro do container e publica `reports/load/**` e `reports/spike/**` como artefato.
+O fluxo em `.github/workflows/performance.yml` executa em `ubuntu-latest`, faz `docker build` da imagem do projeto, roda os perfis `load` e `spike` dentro do container e publica o resultado no GitHub Pages em `/reports/`.
+
+No Pages, a estrutura fica assim:
+
+- `/reports/` com uma pagina inicial do relatório
+- `/reports/load/html-report/index.html` com o teste de carga
+- `/reports/spike/html-report/index.html` com o teste de pico
+- `/reports/EXECUTION_REPORT.md` com o resumo textual da execução
 
 Como executar no GitHub:
 
@@ -73,6 +82,8 @@ Como executar no GitHub:
 4. Clique em `Run workflow` para executar manualmente.
 
 O workflow tambem roda automaticamente em `push` na branch `main` e em `pull_request`.
+
+Para habilitar o Pages, configure o repositório para usar o GitHub Actions como fonte de publicação em `Settings > Pages`.
 
 ## Criterio de aceitacao
 
@@ -84,17 +95,17 @@ O objetivo deste teste nao e apenas "carregar" a aplicacao, mas confirmar que o 
 
 ### Quando o criterio e satisfatorio
 
-O criterio e considerado satisfatorio quando o teste consegue manter a vazao alvo de `250 req/s` e, ao mesmo tempo, o `90th percentile` fica abaixo de `2 s`. Nesse caso, a maioria esmagadora das requisicoes responde dentro da janela esperada, o fluxo de compra permanece consistente e nao ha indicio de degradacao relevante do sistema.
+O criterio e considerado satisfatorio quando o teste consegue manter a vazão alvo de `250 req/s` e, ao mesmo tempo, o `90th percentile` fica abaixo de `2 s`. Nesse caso, a maioria esmagadora das requisicoes responde dentro da janela esperada, o fluxo de compra permanece consistente e nao ha indicio de degradacao relevante do sistema.
 
 ### Quando o criterio nao e satisfatorio
 
-O criterio e considerado nao satisfatorio quando qualquer um destes pontos ocorre:
+O critério e considerado nao satisfatório quando qualquer um destes pontos ocorre:
 
-- a vazao fica abaixo de `250 req/s`
+- a vazão fica abaixo de `250 req/s`
 - o `90th percentile` ultrapassa `2 s`
 - o volume de erros deixa de ser nulo ou aceitavel
 
-Isso indica que o sistema nao conseguiu sustentar o nivel minimo de desempenho esperado para uma experiencia estavel. Se a vazao cair, o ambiente nao suporta a demanda. Se o `p90` subir acima de `2 s`, mesmo que a media pareca boa, uma parcela relevante dos usuarios vai perceber lentidao. Se houver erro, o fluxo de compra deixa de ser confiavel.
+Isso indica que o sistema nao conseguiu sustentar o nível mínimo de desempenho esperado para uma experiencia estavel. Se a vazao cair, o ambiente nao suporta a demanda. Se o `p90` subir acima de `2 s`, mesmo que a media pareca boa, uma parcela relevante dos usuarios vai perceber lentidao. Se houver erro, o fluxo de compra deixa de ser confiavel.
 
 ### Como interpretar o resultado
 
@@ -102,17 +113,6 @@ Isso indica que o sistema nao conseguiu sustentar o nivel minimo de desempenho e
 - Se a vazao for menor que `250 req/s`, o criterio foi reprovado.
 - Se o `p90 >= 2 s`, o criterio foi reprovado.
 - Se houver erros recorrentes, o criterio tambem deve ser tratado como reprovado.
-
-## Relatorio de execucao
-
-Este ambiente nao executa o Docker nem publica no GitHub, entao os scripts foram preparados, mas os numeros de execucao nao foram gerados aqui.
-
-Quando o teste for executado, a conclusao deve ser preenchida com base em:
-
-- vazao obtida
-- p90 medido
-- taxa de erro
-- estabilidade da confirmacao de compra
 
 ## Consideracoes
 

@@ -41,6 +41,7 @@ function Invoke-JMeterProfile {
     $planFileContainer = "/workspace/.generated/$RunName.jmx"
     $jtlPath = "/workspace/reports/$RunName/results.jtl"
     $reportDir = "/workspace/reports/$RunName/html-report"
+    $logPath = Join-Path $runDir 'run.log'
 
     if (Test-Path $runDir) {
         Remove-Item $runDir -Recurse -Force
@@ -67,7 +68,22 @@ function Invoke-JMeterProfile {
         -t $planFileContainer `
         -l $jtlPath `
         -e `
-        -o $reportDir
+        -o $reportDir 2>&1 | Tee-Object -FilePath $logPath
+
+    $exitCode = $LASTEXITCODE
+    $reportIndex = Join-Path $runDir 'html-report\index.html'
+
+    if ($exitCode -ne 0) {
+        Write-Warning "$RunName falhou com exit code $exitCode"
+        return $false
+    }
+
+    if (-not (Test-Path $reportIndex)) {
+        Write-Warning "$RunName nao gerou html-report/index.html"
+        return $false
+    }
+
+    return $true
 }
 
 Assert-DockerAvailable
@@ -80,13 +96,16 @@ if (-not $SkipBuild) {
 
 switch ($Mode) {
     'load' {
-        Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '900' -Throughput '250'
+        $null = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '900' -Throughput '250'
     }
     'spike' {
-        Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '180' -Throughput '250'
+        $null = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '180' -Throughput '250'
     }
     'both' {
-        Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '900' -Throughput '250'
-        Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '180' -Throughput '250'
+        $loadOk = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '900' -Throughput '250'
+        $spikeOk = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '180' -Throughput '250'
+        if (-not $loadOk -or -not $spikeOk) {
+            throw 'Um ou mais perfis falharam. Consulte os logs em reports/<perfil>/run.log.'
+        }
     }
 }

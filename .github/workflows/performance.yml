@@ -7,8 +7,13 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  jmeter:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,11 +25,58 @@ jobs:
         run: |
           ./scripts/run-jmeter.ps1 -Mode both
 
-      - name: Upload reports
+      - name: Prepare Pages site
         if: always()
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          rm -rf site
+          mkdir -p site/reports
+          cp -R reports/. site/reports/
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="utf-8" />
+              <meta http-equiv="refresh" content="0; url=/reports/" />
+              <title>BlazeDemo Performance</title>
+            </head>
+            <body>
+              <p>Redirecionando para <a href="/reports/">/reports/</a>...</p>
+            </body>
+          </html>
+          EOF
+          cat > site/reports/index.html <<'EOF'
+          <!doctype html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="utf-8" />
+              <title>BlazeDemo Performance Reports</title>
+            </head>
+            <body>
+              <h1>BlazeDemo Performance Reports</h1>
+              <ul>
+                <li><a href="load/html-report/index.html">Teste de carga</a></li>
+                <li><a href="spike/html-report/index.html">Teste de pico</a></li>
+                <li><a href="EXECUTION_REPORT.md">Relatorio de execucao</a></li>
+              </ul>
+            </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: jmeter-reports
-          path: |
-            reports/load/**
-            reports/spike/**
+          path: site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

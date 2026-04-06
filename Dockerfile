@@ -1,12 +1,15 @@
 FROM eclipse-temurin:17-jre-jammy
 
 ARG JMETER_VERSION=5.6.3
+ENV TZ=America/Sao_Paulo
 
 ENV JMETER_HOME=/opt/apache-jmeter-${JMETER_VERSION}
 ENV PATH="${JMETER_HOME}/bin:${PATH}"
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates tar \
+    && apt-get install -y --no-install-recommends curl ca-certificates tar tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \

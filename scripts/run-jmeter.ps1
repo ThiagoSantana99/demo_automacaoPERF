@@ -13,6 +13,8 @@ $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $reportsRoot = Join-Path $root 'reports'
 $generatedRoot = Join-Path $root '.generated'
+$executionReportPath = Join-Path $root 'EXECUTION_REPORT.md'
+$publishedExecutionReportPath = Join-Path $reportsRoot 'EXECUTION_REPORT.md'
 $log4jConfig = '/workspace/config/log4j2-console.xml'
 
 function Assert-DockerAvailable {
@@ -25,6 +27,56 @@ function Invoke-DockerBuild {
     param([string]$ContextPath)
 
     & docker build -t $ImageName $ContextPath
+}
+
+function Update-ExecutionReport {
+    param(
+        [datetime]$RunAt = (Get-Date)
+    )
+
+    $timeZone = $null
+    foreach ($timeZoneId in @('America/Sao_Paulo', 'E. South America Standard Time')) {
+        try {
+            $timeZone = [System.TimeZoneInfo]::FindSystemTimeZoneById($timeZoneId)
+            break
+        } catch {
+        }
+    }
+
+    if ($null -eq $timeZone) {
+        $timestamp = $RunAt.ToString('yyyy-MM-dd HH:mm:ss zzz')
+    } else {
+        $timestamp = [System.TimeZoneInfo]::ConvertTime($RunAt, $timeZone).ToString('yyyy-MM-dd HH:mm:ss zzz')
+    }
+
+    $reportPaths = @(
+        $executionReportPath,
+        $publishedExecutionReportPath
+    )
+
+    foreach ($reportPath in $reportPaths) {
+        if (-not (Test-Path $reportPath)) {
+            continue
+        }
+
+        $content = Get-Content $reportPath -Raw
+
+        if ($content -match '(?m)^## Ultima execucao$') {
+            $content = [regex]::Replace(
+                $content,
+                '(?ms)^## Ultima execucao\s*\r?\n.*?(?=\r?\n## |\z)',
+                "## Ultima execucao`r`n$timestamp`r`n"
+            )
+        } else {
+            $content = [regex]::Replace(
+                $content,
+                '(?m)^# Execution Report\s*$',
+                "# Execution Report`r`n`r`n## Ultima execucao`r`n$timestamp`r`n"
+            )
+        }
+
+        [System.IO.File]::WriteAllText($reportPath, $content, [System.Text.Encoding]::UTF8)
+    }
 }
 
 function Invoke-JMeterProfile {
@@ -100,18 +152,26 @@ if (-not $SkipBuild) {
     Invoke-DockerBuild -ContextPath $root
 }
 
-switch ($Mode) {
-    'load' {
-        $null = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '300' -Throughput '250'
-    }
-    'spike' {
-        $null = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '300' -Throughput '250'
-    }
-    'both' {
-        $loadOk = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '300' -Throughput '250'
-        $spikeOk = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '300' -Throughput '250'
-        if (-not $loadOk -or -not $spikeOk) {
-            throw 'Um ou mais perfis falharam. Consulte os logs em reports/<perfil>/run.log.'
+try {
+    switch ($Mode) {
+        'load' {
+            $null = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '300' -Throughput '250'
         }
+        'spike' {
+            $null = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '300' -Throughput '250'
+        }
+        'both' {
+            $loadOk = Invoke-JMeterProfile -RunName 'load' -Threads '500' -RampUp '300' -Duration '300' -Throughput '250'
+            $spikeOk = Invoke-JMeterProfile -RunName 'spike' -Threads '1000' -RampUp '60' -Duration '300' -Throughput '250'
+            if (-not $loadOk -or -not $spikeOk) {
+                throw 'Um ou mais perfis falharam. Consulte os logs em reports/<perfil>/run.log.'
+            }
+        }
+    }
+} finally {
+    try {
+        Update-ExecutionReport
+    } catch {
+        Write-Warning "Nao foi possivel atualizar o EXECUTION_REPORT.md: $($_.Exception.Message)"
     }
 }
